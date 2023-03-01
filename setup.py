@@ -26,6 +26,7 @@ requirements_py3 = [
     'six',
     'requests',
     'protobuf>=3.4.0,<4.0.0',
+    'lz4a==0.7.0',
 ]
 
 requirements_py2 = [

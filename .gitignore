@@ -1,0 +1,7 @@
+*.egg-info
+.idea/**
+.vscode/
+*.pyc
+local.env
+.DS_Store
+build/
