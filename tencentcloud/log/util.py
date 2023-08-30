@@ -4,8 +4,12 @@ import hashlib
 import hmac
 import six
 import base64
-import collections.abc as collections_abc
-import collections as collections_abc
+
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
+
 
 
 def base64_encodestring(s):
