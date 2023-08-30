@@ -1,0 +1,4 @@
+requests
+protobuf<=3.4.0
+six
+lz4a
