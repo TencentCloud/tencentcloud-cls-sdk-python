@@ -1,11 +1,20 @@
-import re
-import socket
+try:
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
+import base64
 import hashlib
 import hmac
+import logging
+import re
+import socket
+import sys
+from datetime import datetime, tzinfo, timedelta
+
 import six
-import base64
-import collections.abc as collections_abc
-import collections as collections_abc
+from dateutil import parser
+
+logger = logging.getLogger(__name__)
 
 
 def base64_encodestring(s):
@@ -100,4 +109,62 @@ class Util(object):
                         for k, v in six.iteritems(data))
         elif isinstance(data, collections_abc.Iterable) and not isinstance(data, (six.binary_type, six.string_types)):
             return type(data)(map(Util.convert_unicode_to_str, data))
+        else:
+            return data
 
+
+ZERO = timedelta(0)
+
+
+class UTC(tzinfo):
+    """UTC"""
+
+    def utcoffset(self, dt):
+        return ZERO
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return ZERO
+
+
+utc = UTC()
+
+
+def _get_total_seconds(self, delta):
+    return ((delta.days * 86400 + delta.seconds) * 10 ** 6 + delta.microseconds) / 10 ** 6
+
+
+def parse_timestamp(tm):
+    if isinstance(tm, (int, float)) or \
+            (isinstance(tm, (six.text_type, six.binary_type)) and tm.isdigit()):
+        return str(tm)
+
+    try:
+        dt = parser.parse(tm)
+    except ValueError as ex:
+        try:
+            # try to use dateparser to parse the format.
+            from dateparser import parse
+            try:
+                dt = parse(tm)
+                if dt is None:
+                    raise ex
+            except Exception as e:
+                logger.error("fail to parse date: {0}, detail: {1}".format(tm, e))
+                raise e
+
+        except ImportError as ex2:
+            raise ex
+
+    if sys.version_info[:2] == (2, 6):
+        if dt.tzinfo is None:
+            return str(int(_get_total_seconds(dt - datetime(1970, 1, 1))))
+        return str(int(_get_total_seconds(dt - datetime(1970, 1, 1, tzinfo=utc))))
+    elif six.PY2:
+        if dt.tzinfo is None:
+            return str(int((dt - datetime(1970, 1, 1)).total_seconds()))
+        return str(int((dt - datetime(1970, 1, 1, tzinfo=utc)).total_seconds()))
+    else:
+        return str(int(dt.timestamp()))
