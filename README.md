@@ -3,7 +3,6 @@
 日志服务cls python sdk
 
 ### 支持Python版本
-    Python 2.6
     Python 2.7
     Python 3.3
     Python 3.4
