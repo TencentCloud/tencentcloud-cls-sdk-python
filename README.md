@@ -13,7 +13,7 @@
     Pypy3
 
 ### 安装
-pip install pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git
+pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git
 
 ### Host
 
