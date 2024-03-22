@@ -13,14 +13,13 @@ Depending on your version of Python, these libraries may also should be installe
 http://pypi.python.org/pypi/simplejson/
 """
 
-
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-import sys
 import re
+import sys
 
 requirements_py3 = [
     'six',
@@ -42,17 +41,16 @@ if sys.version_info[0] == 2:
 elif sys.version_info[0] == 3:
     requirements = requirements_py3
 
-
 packages = [
     'tencentcloud',
     'tencentcloud.log',
+    'tencentcloud/log/consumer'
 ]
 
 version = ''
 with open('tencentcloud/log/version.py', 'r') as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
-
 
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -67,7 +65,6 @@ classifiers = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: Implementation :: PyPy',
 ]
-
 
 long_description = """
 Python SDK for TencentCloud Log Service 
