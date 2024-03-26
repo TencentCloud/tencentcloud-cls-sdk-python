@@ -6,7 +6,9 @@
 
 import hashlib
 import hmac
+import sys
 import time
+from datetime import datetime
 
 from six.moves.urllib.parse import quote_plus
 
@@ -41,3 +43,65 @@ def signature(access_key_id, access_key_secret, method='GET', path='/', params={
         headers=';'.join(sorted(map(lambda k: k.lower(), filters_headers.keys()))),
         sign=sign
     )
+
+
+def signatureWithYunApiV3(access_key_id, access_key_secret, service='cls',
+                          method='GET', path='/', params={}, headers={}, data=''):
+    canonical_uri = path
+    canonical_querystring = ""
+    payload = data
+
+    if method == 'GET':
+        canonical_querystring = params
+        payload = ""
+
+    if headers.get("X-TC-Content-SHA256") == "UNSIGNED-PAYLOAD":
+        payload = "UNSIGNED-PAYLOAD"
+
+    if sys.version_info[0] == 3 and isinstance(payload, type("")):
+        payload = payload.encode("utf8")
+
+    payload_hash = hashlib.sha256(payload).hexdigest()
+
+    canonical_headers = 'content-type:%s\nhost:%s\n' % (
+        headers["Content-Type"], headers["Host"])
+    signed_headers = 'content-type;host'
+    canonical_request = '%s\n%s\n%s\n%s\n%s\n%s' % (method,
+                                                    canonical_uri,
+                                                    canonical_querystring,
+                                                    canonical_headers,
+                                                    signed_headers,
+                                                    payload_hash)
+
+    algorithm = 'TC3-HMAC-SHA256'
+    timestamp = int(time.time())
+    if 'X-TC-Timestamp' in headers:
+        timestamp = int(headers['X-TC-Timestamp'])
+    date = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
+    credential_scope = date + '/' + service + '/tc3_request'
+    if sys.version_info[0] == 3:
+        canonical_request = canonical_request.encode("utf8")
+    digest = hashlib.sha256(canonical_request).hexdigest()
+    string2sign = '%s\n%s\n%s\n%s' % (algorithm,
+                                      timestamp,
+                                      credential_scope,
+                                      digest)
+
+    sign_str = sign_tc3(access_key_secret, date, service, string2sign)
+    return "TC3-HMAC-SHA256 Credential=%s/%s/%s/tc3_request, SignedHeaders=content-type;host, Signature=%s" % (
+        access_key_id, date, service, sign_str)
+
+
+def sign_tc3(secret_key, date, service, str2sign):
+    def _hmac_sha256(key, msg):
+        return hmac.new(key, msg.encode('utf-8'), hashlib.sha256)
+
+    def _get_signature_key(key, date, service):
+        k_date = _hmac_sha256(('TC3' + key).encode('utf-8'), date)
+        k_service = _hmac_sha256(k_date.digest(), service)
+        k_signing = _hmac_sha256(k_service.digest(), 'tc3_request')
+        return k_signing.digest()
+
+    signing_key = _get_signature_key(secret_key, date, service)
+    signature = _hmac_sha256(signing_key, str2sign).hexdigest()
+    return signature
