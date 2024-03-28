@@ -262,13 +262,13 @@ class LogClient(object):
 
         body_dict = {
             'StartOffset': offset,
-            'StartTime': start_time,
+            'StartTime': int(start_time),
             'Size': size,
             'CompressType': 'snappy',
             'PartitionId': partition_id
         }
         if end_time is not None:
-            body_dict['EndTime'] = end_time
+            body_dict['EndTime'] = int(end_time)
 
         body_str = six.b(json.dumps(body_dict))
 

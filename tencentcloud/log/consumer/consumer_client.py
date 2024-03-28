@@ -58,10 +58,9 @@ class ConsumerClient(object):
                 raise ClientWorkerException('error occour when create consumer group, errorCode: '
                                             + e.get_error_code() + ", errorMessage: " + e.get_error_message())
 
-    def get_consumer_group(self):
+    def list_consumer_group(self):
         for consumer_group in \
-                self.yunapi_client.list_consumer_group(self.logset_id, self.topic_ids,
-                                                       self.region).get_consumer_groups():
+                self.yunapi_client.list_consumer_group(self.logset_id, self.topic_ids).get_consumer_groups():
             if consumer_group.get_consumer_group_name() == self.consumer_group:
                 return consumer_group
 
@@ -104,5 +103,5 @@ class ConsumerClient(object):
     def pull_logs(self, topic_id, partition_id, size, start_time=0, offset=0, end_time=None):
         return self.client.pull_logs(topic_id, partition_id, size, start_time, offset, end_time)
 
-    def delete_consumer(self):
+    def delete_consumer_group(self):
         return self.yunapi_client.delete_consumer_group(self.logset_id, self.consumer_group)

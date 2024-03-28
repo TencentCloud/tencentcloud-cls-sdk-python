@@ -89,7 +89,6 @@ def sample_consumer_group():
     consumer_group = 'consumer-group-1'
     consumer_name1 = "consumer-group-1-A"
     consumer_name2 = "consumer-group-1-B"
-    token = ""
     region = ""
 
     assert endpoint and access_key_id and access_key and logset_id, ValueError("endpoint/access_id/access_key and "
@@ -101,10 +100,10 @@ def sample_consumer_group():
         # create two consumers in the consumer group
         option1 = LogHubConfig(endpoint, access_key_id, access_key, region, logset_id, topic_ids, consumer_group,
                                consumer_name1, heartbeat_interval=3, data_fetch_interval=1,
-                               offset_start_time="end", max_fetch_log_group_size=10485760)
+                               offset_start_time=TimePosition.END, max_fetch_log_group_size=1048576)
         option2 = LogHubConfig(endpoint, access_key_id, access_key, region, logset_id, topic_ids, consumer_group,
                                consumer_name2, heartbeat_interval=3, data_fetch_interval=1,
-                               offset_start_time="end", max_fetch_log_group_size=10485760)
+                               offset_start_time=TimePosition.END, max_fetch_log_group_size=1048576)
 
         print("*** start to consume data...")
         client_worker1 = ConsumerWorker(SampleConsumer, consumer_option=option1)
