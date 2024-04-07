@@ -68,7 +68,8 @@ class ConsumerWorker(Thread):
                 continue
 
             # has not yet do any successful fetch yet or get some data
-            if consumer.last_success_fetch_time == 0 or consumer.last_fetch_count > 0:
+            if (consumer.last_success_fetch_time == 0 or consumer.last_fetch_count > 0) and \
+                    not consumer.next_task_reach_end:
                 return False
 
         # init self.last_owned_consumer_finish_time if it's None

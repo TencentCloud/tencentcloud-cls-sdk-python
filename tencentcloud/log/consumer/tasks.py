@@ -11,6 +11,8 @@ from tencentcloud.log.logexception import LogException
 
 logger = logging.getLogger(__name__)
 
+PULL_NO_LOG = -1
+
 
 class ConsumerProcessorBase(object):
     def __init__(self):
@@ -110,16 +112,20 @@ class InitTaskResult(TaskResult):
 
 
 class FetchTaskResult(TaskResult):
-    def __init__(self, fetched_log_groups, offset):
+    def __init__(self, fetched_log_groups, offset, reach_end=False):
         super(FetchTaskResult, self).__init__(None)
         self.fetched_log_groups = fetched_log_groups
         self.offset = offset
+        self.reach_end = reach_end
 
     def get_fetched_log_group_list(self):
         return self.fetched_log_groups
 
     def get_offset(self):
         return self.offset
+
+    def get_reach_end(self):
+        return self.reach_end
 
 
 def consumer_process_task(processor, log_groups, offset_tracker):
@@ -180,6 +186,8 @@ def consumer_fetch_task(loghub_client_adapter, topic_id, partition_id, offset, m
                          response.get_log_count())
             if not next_offset:
                 return FetchTaskResult(fetch_log_groups, offset)
+            if next_offset == PULL_NO_LOG:
+                return FetchTaskResult(fetch_log_groups, offset, reach_end=True)
             else:
                 return FetchTaskResult(fetch_log_groups, next_offset)
         except LogException as e:
