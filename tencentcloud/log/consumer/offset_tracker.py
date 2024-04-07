@@ -40,9 +40,9 @@ class ConsumerOffsetTracker(object):
     def set_persistent_offset(self, offset):
         self.last_persistent_offset = offset
 
-    def flush_offset(self):
+    def flush_offset(self, force=False):
         with self.lock:
-            if self.temp_offset != '' and self.temp_offset != self.last_persistent_offset:
+            if (self.temp_offset != '' and self.temp_offset != self.last_persistent_offset) or force:
                 try:
                     self.consumer_group_client.update_offsets(self.generate_offsets(self.temp_offset))
                     self.last_persistent_offset = self.temp_offset

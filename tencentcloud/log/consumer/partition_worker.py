@@ -56,6 +56,8 @@ class PartitionConsumerWorker(object):
         self.last_success_fetch_time = 0
         self.last_success_fetch_time_with_data = 0
         self.save_last_offset = False
+        self.fetch_reach_end = False
+        self.next_task_reach_end = False
 
         self.logger = PartitionConsumerWorkerLoggerAdapter(
             logging.getLogger(__name__), {"partition_consumer_worker": self})
@@ -92,6 +94,7 @@ class PartitionConsumerWorker(object):
                 self.last_fetch_log_group = FetchedLogGroup(self.partition_id, task_result.get_fetched_log_group_list(),
                                                             task_result.get_offset())
                 self.next_fetch_offset = task_result.get_offset()
+                self.fetch_reach_end = task_result.get_reach_end()
                 self.last_fetch_count = self.last_fetch_log_group.log_group_size
                 if self.last_fetch_count > 0:
                     self.last_success_fetch_time_with_data = time.time()
@@ -117,7 +120,7 @@ class PartitionConsumerWorker(object):
                 elif self.last_fetch_count < 1000:
                     is_generate_fetch_task = (time.time() - self.last_fetch_time) > 0.05
 
-                if is_generate_fetch_task:
+                if is_generate_fetch_task and not self.fetch_reach_end:
                     self.last_fetch_time = time.time()
                     self.fetch_data_future = \
                         self.executor.submit(consumer_fetch_task,
@@ -158,6 +161,11 @@ class PartitionConsumerWorker(object):
                 elif isinstance(task_result, ProcessTaskResult):
                     # maintain check points
                     process_task_result = task_result
+                    # next task reach endTime, shutdown worker
+                    if self.fetch_reach_end:
+                        self.next_task_reach_end = self.fetch_reach_end
+                        self.offset_tracker.flush_offset(force=True)
+
                     roll_back_offset = process_task_result.get_rollback_offset()
                     if roll_back_offset:
                         self.last_fetch_log_group = None
