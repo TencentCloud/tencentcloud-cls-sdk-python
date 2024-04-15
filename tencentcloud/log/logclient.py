@@ -228,7 +228,7 @@ class LogClient(object):
             'Content-Length': str(len(body))
         }
         params = {"topic_id": topic_id}
-        resource = '/structuredlog?topic_id=' + topic_id
+        resource = '/structuredlog'
 
         (resp, header) = self._send('POST', body, resource, params, headers, RESPONSE_BODY_TYPE_BINARY)
         return PutLogsResponse(header, resp)

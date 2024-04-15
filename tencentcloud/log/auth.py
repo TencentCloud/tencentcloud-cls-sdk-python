@@ -34,7 +34,7 @@ def signature(access_key_id, access_key_secret, method='GET', path='/', params={
     sign_key = hmac.new(access_key_secret.encode('utf-8'), sign_time.encode('utf-8'), hashlib.sha1).hexdigest()
     sign = hmac.new(sign_key.encode('utf-8'), str_to_sign.encode('utf-8'), hashlib.sha1).hexdigest()
     sign_tpl = "q-sign-algorithm=sha1&q-ak={ak}&q-sign-time={sign_time}&q-key-time={key_time}&q-header-list={" \
-               "headers}&q-url-param-list={params}&q-signature={sign} "
+               "headers}&q-url-param-list={params}&q-signature={sign}"
     return sign_tpl.format(
         ak=access_key_id,
         sign_time=sign_time,
