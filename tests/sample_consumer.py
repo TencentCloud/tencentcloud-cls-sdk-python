@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import json
 import os
 from threading import RLock
 
@@ -29,9 +29,10 @@ class SampleConsumer(ConsumerProcessorBase):
         for log_group in log_groups:
             for log in log_group.logs:
                 item = dict()
-                item['time'] = log.time
                 item['filename'] = log_group.filename
                 item['source'] = log_group.source
+
+                item['time'] = log.time
                 for content in log.contents:
                     item[content.key] = content.value
 
@@ -113,23 +114,26 @@ def sample_consumer_group():
 
         sleep_until(120, lambda: len(SampleConsumer.log_results) > 0)
 
-        print("*** consumer group status ***")
-        ret = client.list_consumer_group(logset_id, topic_ids)
-        ret.log_print()
-
         print("*** stopping workers")
         client_worker1.shutdown()
         client_worker2.shutdown()
 
+        # validate
+        print("*** get content:")
+        for log in SampleConsumer.log_results:
+            print(json.dumps(log))
+
+        print("*** consumer group status ***")
+        ret = client.list_consumer_group(logset_id, topic_ids)
+        ret.log_print()
+
         print("*** delete consumer group")
+        time.sleep(30)
         client.delete_consumer_group(logset_id, consumer_group)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise e
-
-    # validate
-    ret = str(SampleConsumer.log_results)
-    print("*** get content:")
-    print(ret)
 
 
 if __name__ == '__main__':
