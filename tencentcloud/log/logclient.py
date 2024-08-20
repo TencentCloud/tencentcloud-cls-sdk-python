@@ -25,17 +25,20 @@ if six.PY3:
     xrange = range
 
 try:
-    import lz4
+    try:
+        import lz4.block as lz4
+    except ImportError:
+        import lz4
 
-    if not hasattr(lz4, 'loads') or not hasattr(lz4, 'dumps'):
+    if not hasattr(lz4, 'decompress') or not hasattr(lz4, 'compress'):
         lz4 = None
     else:
         def lz_decompress(raw_size, data):
-            return lz4.loads(struct.pack('<I', raw_size) + data)
+            return lz4.decompress(struct.pack('<I', raw_size) + data)
 
 
         def lz_compresss(data):
-            return lz4.dumps(data)[4:]
+            return lz4.compress(data)[4:]
 
 except ImportError:
     lz4 = None

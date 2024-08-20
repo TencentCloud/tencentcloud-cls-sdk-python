@@ -1,6 +1,6 @@
 requests
 protobuf>=3.4.0
 six
-lz4a
+lz4
 python-dateutil
 python-snappy
