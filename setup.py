@@ -25,14 +25,14 @@ requirements_py3 = [
     'six',
     'requests',
     'protobuf>=3.4.0,<4.0.0',
-    'lz4a==0.7.0',
+    'lz4',
 ]
 
 requirements_py2 = [
     'six==1.14.0',
     'requests==2.23.0',
     'protobuf<=3.4.0',
-    'lz4a==0.7.0',
+    'lz4',
 ]
 
 requirements = []
