@@ -1,5 +1,6 @@
 日志服务SDK
 ---
+
 日志服务cls python sdk
 
 ### 支持Python版本
@@ -17,11 +18,11 @@
 
 ### 安装
 
-pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v1.0.2
+`pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v1.0.3`
 
 ### Host
 
-https://cloud.tencent.com/document/product/614/18940 使用API日志上传域名
+`https://cloud.tencent.com/document/product/614/18940` 使用API日志上传域名
 
 ### 密钥信息
 
@@ -77,6 +78,8 @@ if __name__ == '__main__':
 
 ### 日志自定义消费代码示例
 
+> 推荐使用 3.5 及以上 python 版本进行数据消费
+
 ```
 # -*- coding: utf-8 -*-
 import json
@@ -107,7 +110,7 @@ class SampleConsumer(ConsumerProcessorBase):
                     item[content.key] = content.value
 
                 with SampleConsumer.lock:
-                    # 数据汇总到SampleConsumer.log_results
+                    # 数据汇总到 SampleConsumer.log_results
                     SampleConsumer.log_results.append(item)
 
         # 每隔3s提交一次offset
@@ -157,15 +160,15 @@ def sample_consumer_group():
     # 日志服务接入点，请您根据实际情况填写
     endpoint = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_ENDPOINT', '')
     # 访问的地域
-    region = ""
+    region = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_REGION', '')
     # 用户的Secret_id
     access_key_id = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_ACCESSID', '')
     # 用户的Secret_key
     access_key = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_ACCESSKEY', '')
     # 消费的日志集ID
     logset_id = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_LOGSET_ID', '')
-    # 消费的日志主题ID列表，支持多个
-    topic_ids = []
+    # 消费的日志主题ID列表，多个主题用英文逗号分隔
+    topic_ids = os.environ.get('TENCENTCLOUD_LOG_SAMPLE_TOPICS', '').split(',')
     # 消费组名称，同一个日志集下的消费组名称唯一
     consumer_group = 'consumer-group-1'
     # 消费者名称
@@ -182,10 +185,10 @@ def sample_consumer_group():
         # 创建两个消费者配置
         option1 = LogHubConfig(endpoint, access_key_id, access_key, region, logset_id, topic_ids, consumer_group,
                                consumer_name1, heartbeat_interval=3, data_fetch_interval=1,
-                               offset_start_time=TimePosition.END, max_fetch_log_group_size=1048576)
+                               offset_start_time='end', max_fetch_log_group_size=1048576)
         option2 = LogHubConfig(endpoint, access_key_id, access_key, region, logset_id, topic_ids, consumer_group,
                                consumer_name2, heartbeat_interval=3, data_fetch_interval=1,
-                               offset_start_time=TimePosition.END, max_fetch_log_group_size=1048576)
+                               offset_start_time='end', max_fetch_log_group_size=1048576)
 
         # 创建消费者
         print("*** start to consume data...")
@@ -227,6 +230,3 @@ def sample_consumer_group():
 if __name__ == '__main__':
     sample_consumer_group()
 ```
-
-
-
