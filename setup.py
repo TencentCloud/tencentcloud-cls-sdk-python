@@ -72,7 +72,6 @@ classifiers = [
 
 long_description = """
 Python SDK for TencentCloud Log Service
-http://tencentcloud-cls-sdk-python.readthedocs.io
 """
 
 setup(
