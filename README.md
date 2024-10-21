@@ -18,7 +18,7 @@
 
 ### 安装
 
-`pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v1.0.3`
+`pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v1.0.4`
 
 ### Host
 
