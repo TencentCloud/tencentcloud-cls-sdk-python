@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-from dataclasses import dataclass
 from typing import ClassVar
 
 class Region:
@@ -23,19 +22,18 @@ class Region:
     SHANGHAI_ADC: ClassVar['Region'] = 'ap-shanghai-adc'
 
     def __setattr__(self, *_):
-        """模拟frozen=True的行为，防止修改属性"""
         raise AttributeError("Cannot modify attributes of Region class")
+
 
 class NetworkType:
     INTRANET: ClassVar['NetworkType'] = 'cls.tencentyun.com'
     EXTRANET: ClassVar['NetworkType'] = 'cls.tencentcs.com'
 
     def __setattr__(self, *_):
-        """模拟frozen=True的行为，防止修改属性"""
         raise AttributeError("Cannot modify attributes of NetworkType class")
-@dataclass(frozen=True)
+
+
 class EndpointBuilder:
-    """通过前缀和后缀构建完整endpoint"""
     @staticmethod
     def createEndpoint(prefix, suffix):
         return f"{prefix}.{suffix}"
