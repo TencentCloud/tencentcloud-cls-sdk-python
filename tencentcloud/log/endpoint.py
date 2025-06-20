@@ -1,33 +1,31 @@
 # encoding: utf-8
 
-from typing import ClassVar
-
-class Region:
-    BEIJING: ClassVar['Region'] = 'ap-beijing'
-    GUANGZHOU: ClassVar['Region'] = 'ap-guangzhou'
-    SHANGHAI: ClassVar['Region'] = 'ap-shanghai'
-    HONGKONG: ClassVar['Region'] = 'ap-hongkong'
-    SILICONVALLEY: ClassVar['Region'] = 'na-siliconvalley'
-    ASHBURN: ClassVar['Region'] = 'na-ashburn'
-    SINGAPORE: ClassVar['Region'] = 'ap-singapore'
-    BANGKOK: ClassVar['Region'] = 'ap-bangkok'
-    FRANKFURT: ClassVar['Region'] = 'eu-frankfurt'
-    TOKYO: ClassVar['Region'] = 'ap-tokyo'
-    SEOUL: ClassVar['Region'] = 'ap-seoul'
-    JAKARTA: ClassVar['Region'] = 'ap-jakarta'
-    SAOPAULO: ClassVar['Region'] = 'sa-saopaulo'
-    SHENZHEN_FSI: ClassVar['Region'] = 'ap-shenzhen-fsi'
-    SHANGHAI_FSI: ClassVar['Region'] = 'ap-shanghai-fsi'
-    BEIJING_FSI: ClassVar['Region'] = 'ap-beijing-fsi'
-    SHANGHAI_ADC: ClassVar['Region'] = 'ap-shanghai-adc'
+class Region(object):
+    BEIJING = 'ap-beijing'
+    GUANGZHOU = 'ap-guangzhou'
+    SHANGHAI = 'ap-shanghai'
+    HONGKONG = 'ap-hongkong'
+    SILICONVALLEY = 'na-siliconvalley'
+    ASHBURN = 'na-ashburn'
+    SINGAPORE = 'ap-singapore'
+    BANGKOK = 'ap-bangkok'
+    FRANKFURT = 'eu-frankfurt'
+    TOKYO = 'ap-tokyo'
+    SEOUL = 'ap-seoul'
+    JAKARTA = 'ap-jakarta'
+    SAOPAULO = 'sa-saopaulo'
+    SHENZHEN_FSI = 'ap-shenzhen-fsi'
+    SHANGHAI_FSI = 'ap-shanghai-fsi'
+    BEIJING_FSI = 'ap-beijing-fsi'
+    SHANGHAI_ADC = 'ap-shanghai-adc'
 
     def __setattr__(self, *_):
         raise AttributeError("Cannot modify attributes of Region class")
 
 
 class NetworkType:
-    INTRANET: ClassVar['NetworkType'] = 'cls.tencentyun.com'
-    EXTRANET: ClassVar['NetworkType'] = 'cls.tencentcs.com'
+    INTRANET = 'cls.tencentyun.com'
+    EXTRANET = 'cls.tencentcs.com'
 
     def __setattr__(self, *_):
         raise AttributeError("Cannot modify attributes of NetworkType class")
@@ -36,4 +34,4 @@ class NetworkType:
 class EndpointBuilder:
     @staticmethod
     def createEndpoint(prefix, suffix):
-        return f"{prefix}.{suffix}"
+        return "{0}.{1}".format(prefix, suffix)
