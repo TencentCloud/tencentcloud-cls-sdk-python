@@ -30,20 +30,36 @@ requirements_py3 = [
     'python-snappy<=0.6.0'
 ]
 
+requirements_py31 = [
+    'six',
+    'requests',
+    'protobuf>=3.4.0,<4.0.0',
+    'lz4<=3.1.2',
+    'python-dateutil',
+    'python-snappy<=0.7.0'
+]
+
 requirements_py2 = [
     'six==1.14.0',
     'requests==2.23.0',
     'protobuf<=3.4.0',
     'lz4<=3.1.2',
     'python-dateutil',
-    'python-snappy<=0.6.0'
+    'python-snappy<=0.6.0',
+    'enum',
+    'futures'
 ]
 
 requirements = []
-if sys.version_info[0] == 2:
+major = sys.version_info[0]
+minor = sys.version_info[1]
+if major == 2:
     requirements = requirements_py2
-elif sys.version_info[0] == 3:
-    requirements = requirements_py3
+elif major == 3:
+    if minor < 10:
+        requirements = requirements_py3
+    else:
+        requirements = requirements_py31
 
 packages = [
     'tencentcloud',
