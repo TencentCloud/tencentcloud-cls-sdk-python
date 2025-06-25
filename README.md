@@ -73,6 +73,7 @@ def upload(topic_id, client):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     endpoint = 'https://ap-guangzhou.cls.tencentcs.com'
+    #endpoint = EndpointBuilder.createEndpoint(Region.GUANGZHOU, NetworkType.INTRANET) #也可以通过选择地域和网络类型组成endpoint，且支持自定义参数传入
     accessKeyId = 'your_access_id'
     accessKey = 'your_access_key'
     topic_id = 'your_project_name'
