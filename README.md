@@ -13,6 +13,10 @@
     Python 3.7
     Python 3.8
     Python 3.9
+    Python 3.10
+    Python 3.11
+    Python 3.12
+    Python 3.13
     Pypy2
     Pypy3
 
@@ -26,7 +30,8 @@
 
 ### 密钥信息
 
-accessKeyId和accessKey为云API密钥，密钥信息获取请前往[密钥获取](https://console.cloud.tencent.com/cam/capi)。并请确保密钥关联的账号具有相应的[SDK上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)
+accessKeyId和accessKey为云API密钥，密钥信息获取请前往[密钥获取](https://console.cloud.tencent.com/cam/capi)
+。并请确保密钥关联的账号具有相应的[SDK上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)
 
 ### 日志上传代码示例
 
