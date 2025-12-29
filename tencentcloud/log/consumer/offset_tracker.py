@@ -49,7 +49,7 @@ class ConsumerOffsetTracker(object):
                 except LogException as e:
                     raise OffsetException("Failed to persistent the offset to outside system, " +
                                           self.consumer_name + ", " + str(self.partition_id)
-                                          + ", " + self.temp_offset, e)
+                                          + ", " + str(self.temp_offset), e)
 
     def flush_check(self):
         current_time = time.time()

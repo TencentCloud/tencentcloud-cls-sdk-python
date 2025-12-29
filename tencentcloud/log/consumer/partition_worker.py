@@ -103,7 +103,11 @@ class PartitionConsumerWorker(object):
                 else:
                     if self.last_success_fetch_time_with_data != 0 and time.time() - self.last_success_fetch_time_with_data > 30 \
                             and not self.save_last_offset:
-                        self.offset_tracker.flush_offset()
+                        try:
+                            self.offset_tracker.flush_offset()
+                        except Exception:
+                            import traceback
+                            traceback.print_exc()
                         self.save_last_offset = True
 
             self._sample_log_error(task_result)
@@ -165,7 +169,11 @@ class PartitionConsumerWorker(object):
                     # next task reach endTime, shutdown worker
                     if self.fetch_reach_end:
                         self.next_task_reach_end = self.fetch_reach_end
-                        self.offset_tracker.flush_offset(force=True)
+                        try:
+                            self.offset_tracker.flush_offset(force=True)
+                        except Exception:
+                            import traceback
+                            traceback.print_exc()
 
                     roll_back_offset = process_task_result.get_rollback_offset()
                     if roll_back_offset:
