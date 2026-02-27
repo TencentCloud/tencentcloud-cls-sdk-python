@@ -39,23 +39,10 @@ requirements_py31 = [
     'python-snappy<=0.7.0'
 ]
 
-requirements_py2 = [
-    'six==1.14.0',
-    'requests==2.23.0',
-    'protobuf<=3.4.0',
-    'lz4<=3.1.2',
-    'python-dateutil',
-    'python-snappy<=0.6.0',
-    'enum',
-    'futures'
-]
-
 requirements = []
 major = sys.version_info[0]
 minor = sys.version_info[1]
-if major == 2:
-    requirements = requirements_py2
-elif major == 3:
+if major == 3:
     if minor < 10:
         requirements = requirements_py3
     else:
@@ -76,13 +63,13 @@ classifiers = [
     'Development Status :: 5 - Production/Stable',
     'License :: OSI Approved :: MIT License',
     'Operating System :: OS Independent',
-    'Programming Language :: Python :: 2.6',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.3',
-    'Programming Language :: Python :: 3.4',
-    'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: Implementation :: PyPy',
 ]
 

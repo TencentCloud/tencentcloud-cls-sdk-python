@@ -1,6 +1,0 @@
-requests
-protobuf>=4.0.0
-six
-lz4>=4.0.0
-python-dateutil
-python-snappy<=0.6.0
