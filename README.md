@@ -5,10 +5,6 @@
 
 ### 支持Python版本
 
-    Python 2.7
-    Python 3.3
-    Python 3.4
-    Python 3.5
     Python 3.6
     Python 3.7
     Python 3.8
@@ -17,7 +13,6 @@
     Python 3.11
     Python 3.12
     Python 3.13
-    Pypy2
     Pypy3
 
 ### 安装
@@ -262,7 +257,7 @@ except LogException as e:
 
 ### 日志自定义消费代码示例
 
-> 推荐使用 3.5 及以上 python 版本进行数据消费
+> 推荐使用 3.6 及以上 python 版本进行数据消费
 
 ```python
 # -*- coding: utf-8 -*-
