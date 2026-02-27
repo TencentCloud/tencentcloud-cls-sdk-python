@@ -24,8 +24,8 @@ import sys
 requirements_py3 = [
     'six',
     'requests',
-    'protobuf>=3.4.0,<4.0.0',
-    'lz4<=3.1.2',
+    'protobuf>=4.0.0',
+    'lz4>=4.0.0',
     'python-dateutil',
     'python-snappy<=0.6.0'
 ]
@@ -33,8 +33,8 @@ requirements_py3 = [
 requirements_py31 = [
     'six',
     'requests',
-    'protobuf>=3.4.0,<4.0.0',
-    'lz4<=3.1.2',
+    'protobuf>=4.0.0',
+    'lz4>=4.0.0',
     'python-dateutil',
     'python-snappy<=0.7.0'
 ]

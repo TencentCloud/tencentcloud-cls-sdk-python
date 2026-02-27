@@ -22,71 +22,249 @@
 
 ### 安装
 
-`pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v1.0.7`
+```bash
+pip install git+https://github.com/TencentCloud/tencentcloud-cls-sdk-python.git@v2.0.0
+```
 
-### Host
+### 依赖
 
-`https://cloud.tencent.com/document/product/614/18940` 使用API日志上传域名
+| 依赖包 | 版本要求 |
+|---|---|
+| requests | 最新版 |
+| protobuf | >= 4.0.0 |
+| six | 最新版 |
+| lz4 | >= 4.0.0 |
+| python-dateutil | 最新版 |
+| python-snappy | <= 0.6.0 |
+
+### Host（接入域名）
+
+日志上传域名格式为：`https://<region>.cls.tencentcs.com`（外网）或 `https://<region>.cls.tencentyun.com`（内网）
+
+完整域名列表请参考：[使用 API 上传日志域名](https://cloud.tencent.com/document/product/614/18940)
+
+#### 支持的地域（Region）
+
+| 常量 | 地域 |
+|---|---|
+| `Region.BEIJING` | 北京 |
+| `Region.GUANGZHOU` | 广州 |
+| `Region.SHANGHAI` | 上海 |
+| `Region.CHENGDU` | 成都 |
+| `Region.NANJING` | 南京 |
+| `Region.CHONGQING` | 重庆 |
+| `Region.HONGKONG` | 香港 |
+| `Region.SINGAPORE` | 新加坡 |
+| `Region.TOKYO` | 东京 |
+| `Region.SEOUL` | 首尔 |
+| `Region.FRANKFURT` | 法兰克福 |
+| `Region.SILICONVALLEY` | 硅谷 |
+| `Region.ASHBURN` | 弗吉尼亚 |
+| `Region.JAKARTA` | 雅加达 |
+| `Region.BANGKOK` | 曼谷 |
+| `Region.SAOPAULO` | 圣保罗 |
+
+#### 网络类型（NetworkType）
+
+| 常量 | 说明 |
+|---|---|
+| `NetworkType.EXTRANET` | 外网（`cls.tencentcs.com`） |
+| `NetworkType.INTRANET` | 内网（`cls.tencentyun.com`） |
+
+可通过 `EndpointBuilder.createEndpoint(Region, NetworkType)` 快速构建 endpoint：
+
+```python
+from tencentcloud.log.endpoint import Region, NetworkType, EndpointBuilder
+
+# 广州地域外网
+endpoint = EndpointBuilder.createEndpoint(Region.GUANGZHOU, NetworkType.EXTRANET)
+# => ap-guangzhou.cls.tencentcs.com
+
+# 广州地域内网
+endpoint = EndpointBuilder.createEndpoint(Region.GUANGZHOU, NetworkType.INTRANET)
+# => ap-guangzhou.cls.tencentyun.com
+```
 
 ### 密钥信息
 
-accessKeyId和accessKey为云API密钥，密钥信息获取请前往[密钥获取](https://console.cloud.tencent.com/cam/capi)
-。并请确保密钥关联的账号具有相应的[SDK上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)
+`accessKeyId` 和 `accessKey` 为云 API 密钥，密钥信息获取请前往 [密钥获取](https://console.cloud.tencent.com/cam/capi)。
+
+请确保密钥关联的账号具有相应的 [SDK 上传日志权限](https://cloud.tencent.com/document/product/614/68374#.E4.BD.BF.E7.94.A8-api-.E4.B8.8A.E4.BC.A0.E6.95.B0.E6.8D.AE)。
+
+### LogClient 初始化
+
+```python
+from tencentcloud.log.logclient import LogClient
+
+client = LogClient(
+    endpoint,        # 接入域名，例如 https://ap-guangzhou.cls.tencentcs.com
+    accessKeyId,     # 云 API SecretId
+    accessKey,       # 云 API SecretKey
+    securityToken=None,  # 临时密钥 Token（使用临时密钥时填写）
+    source=None,     # 日志来源 IP，默认自动获取本机 IP
+    region='',       # 地域，例如 ap-guangzhou
+)
+```
 
 ### 日志上传代码示例
 
-```
-# This is a sample Python script.
-import time
+#### 方式一：使用 Protobuf 原始结构上传（推荐）
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+通过 `put_log_raw` 方法直接构造 Protobuf 日志结构上传，性能更优。
+
+```python
+# -*- coding: utf-8 -*-
+import time
 
 from tencentcloud.log.logclient import LogClient
 from tencentcloud.log.logexception import LogException
-from tencentcloud.log.cls_pb2 import LogGroupList
+from tencentcloud.log.cls_pb2 import LogGroup, Log, LogTag
 
 
 def upload(topic_id, client):
-    LogLogGroupList = LogGroupList()
-    LogGroup = LogLogGroupList.logGroupList.add()
-    LogGroup.filename = "python.log"
-    LogGroup.source = "127.0.0.1"
+    log_group = LogGroup()
+    log_group.filename = "python.log"   # 日志文件名（可选）
+    log_group.source = "127.0.0.1"      # 日志来源 IP（可选）
 
-    LogTag = LogGroup.logTags.add()
-    LogTag.key = "key"
-    LogTag.value = "value"
+    # 添加日志标签（可选）
+    tag = log_group.logTags.add()
+    tag.key = "env"
+    tag.value = "production"
 
-    Log = LogGroup.logs.add()
-    Log.time = int(round(time.time() * 1000000))
+    # 添加一条日志
+    log = log_group.logs.add()
+    log.time = int(time.time() * 1000000)  # 微秒时间戳
 
-    Content = Log.contents.add()
-    Content.key = "Hello"
-    Content.value = "World"
+    content = log.contents.add()
+    content.key = "message"
+    content.value = "Hello, CLS!"
+
+    content2 = log.contents.add()
+    content2.key = "level"
+    content2.value = "INFO"
+
     try:
-        request = client.put_log_raw(topic_id, LogLogGroupList)
-        print(request.get_request_id())
+        response = client.put_log_raw(topic_id, log_group)
+        print("上传成功，RequestId:", response.get_request_id())
     except LogException as e:
-        print(e)
+        print("上传失败，错误码:", e.get_error_code(), "，错误信息:", e.get_error_message())
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     endpoint = 'https://ap-guangzhou.cls.tencentcs.com'
-    #endpoint = EndpointBuilder.createEndpoint(Region.GUANGZHOU, NetworkType.INTRANET) #也可以通过选择地域和网络类型组成endpoint，且支持自定义参数传入
-    accessKeyId = 'your_access_id'
-    accessKey = 'your_access_key'
-    topic_id = 'your_project_name'
+    # 也可以通过 EndpointBuilder 构建 endpoint
+    # from tencentcloud.log.endpoint import Region, NetworkType, EndpointBuilder
+    # endpoint = EndpointBuilder.createEndpoint(Region.GUANGZHOU, NetworkType.EXTRANET)
+
+    accessKeyId = 'your_secret_id'
+    accessKey = 'your_secret_key'
+    topic_id = 'your_topic_id'
+
     client = LogClient(endpoint, accessKeyId, accessKey)
     upload(topic_id, client)
-
 ```
+
+#### 方式二：批量上传多条日志
+
+```python
+# -*- coding: utf-8 -*-
+import time
+
+from tencentcloud.log.logclient import LogClient
+from tencentcloud.log.logexception import LogException
+from tencentcloud.log.cls_pb2 import LogGroup
+
+
+def batch_upload(topic_id, client):
+    log_group = LogGroup()
+    log_group.source = "127.0.0.1"
+
+    # 批量添加多条日志
+    log_data = [
+        {"message": "用户登录", "user": "alice", "level": "INFO"},
+        {"message": "查询失败", "user": "bob",   "level": "ERROR"},
+        {"message": "订单创建", "user": "carol", "level": "INFO"},
+    ]
+
+    for item in log_data:
+        log = log_group.logs.add()
+        log.time = int(time.time() * 1000000)
+        for k, v in item.items():
+            content = log.contents.add()
+            content.key = k
+            content.value = v
+
+    try:
+        response = client.put_log_raw(topic_id, log_group)
+        print("批量上传成功，RequestId:", response.get_request_id())
+    except LogException as e:
+        print("上传失败，错误码:", e.get_error_code(), "，错误信息:", e.get_error_message())
+
+
+if __name__ == '__main__':
+    endpoint = 'https://ap-guangzhou.cls.tencentcs.com'
+    accessKeyId = 'your_secret_id'
+    accessKey = 'your_secret_key'
+    topic_id = 'your_topic_id'
+
+    client = LogClient(endpoint, accessKeyId, accessKey)
+    batch_upload(topic_id, client)
+```
+
+### put_log_raw 接口说明
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `topic_id` | string | 日志主题 ID |
+| `log_group` | LogGroup | Protobuf 日志组对象 |
+
+**返回值**：`PutLogsResponse`，可通过 `response.get_request_id()` 获取请求 ID。
+
+**LogGroup 字段说明**：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `source` | string | 日志来源，通常为机器 IP |
+| `filename` | string | 日志文件名（可选） |
+| `logTags` | repeated LogTag | 日志标签列表（可选） |
+| `logs` | repeated Log | 日志列表 |
+
+**Log 字段说明**：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `time` | int64 | 日志时间，微秒时间戳 |
+| `contents` | repeated Content | 日志内容键值对列表 |
+
+### 异常处理
+
+```python
+from tencentcloud.log.logexception import LogException
+
+try:
+    response = client.put_log_raw(topic_id, log_group)
+except LogException as e:
+    print("错误码:", e.get_error_code())
+    print("错误信息:", e.get_error_message())
+    print("RequestId:", e.get_request_id())
+    print("HTTP 状态码:", e.resp_status)
+```
+
+常见错误码：
+
+| 错误码 | 说明 |
+|---|---|
+| `AuthFailure` | 鉴权失败，请检查 SecretId/SecretKey 是否正确 |
+| `InvalidParameter` | 参数错误，请检查 topic_id 等参数 |
+| `ResourceNotFound` | 日志主题不存在 |
+| `SpeedQuotaExceed` | 写入超过配额限制，SDK 会自动重试 |
+| `InternalError` | 服务端内部错误，SDK 会自动重试 |
 
 ### 日志自定义消费代码示例
 
 > 推荐使用 3.5 及以上 python 版本进行数据消费
 
-```
+```python
 # -*- coding: utf-8 -*-
 import json
 import os

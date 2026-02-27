@@ -12,6 +12,7 @@ import requests
 import six
 
 from tencentcloud.log.auth import signature, signatureWithYunApiV3
+from tencentcloud.log.cls_pb2 import LogGroupList
 from tencentcloud.log.consumer_group_request import *
 from tencentcloud.log.consumer_group_response import *
 from tencentcloud.log.logexception import LogException
@@ -224,7 +225,9 @@ class LogClient(object):
         :raise: LogException
         """
 
-        body = log_group.SerializeToString()
+        log_group_list = LogGroupList()
+        log_group_list.logGroupList.append(log_group)
+        body = log_group_list.SerializeToString()
         body = lz_compresss(body)
         headers = {
             'Host': self._logHost,
