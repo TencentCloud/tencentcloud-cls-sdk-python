@@ -14,6 +14,11 @@ import six
 from tencentcloud.log.auth import signature, signatureWithYunApiV3
 from tencentcloud.log.consumer_group_request import *
 from tencentcloud.log.consumer_group_response import *
+from tencentcloud.log.error_code import (
+    INVALID_UIN,
+    MISS_ACCESS_KEY_ID,
+    UNSUPPORTED_OPERATION,
+)
 from tencentcloud.log.logexception import LogException
 from tencentcloud.log.pulllog_response import PullLogResponse
 from tencentcloud.log.putlogsresponse import PutLogsResponse
@@ -54,6 +59,29 @@ CLS_YUNAPI_ENDPOINT = 'cls.tencentcloudapi.com'
 CLS_YUNAPI_ENDPOINT_TEMP = 'cls.%s.tencentcloudapi.com'
 CLS_YUNAPI_INTERNAL_ENDPOINT = 'cls.internal.tencentcloudapi.com'
 
+# 弱鉴权（免密）相关请求头，字面量与服务端 consts.ClsAuthMode / consts.ClsUIN 保持一致
+HEADER_AUTH_MODE = 'x-cls-auth-mode'
+HEADER_UIN = 'X-CLS-Uin'
+AUTH_MODE_WEAK = 'weak'
+
+_DIGITS = '0123456789'
+
+
+def _is_digits_only(value):
+    """判断 value 是否为非空的纯 ASCII 数字字符串。
+
+    不使用 str.isdigit()：它会放过全角数字（'１２３'）与 Unicode 上标（'²'）等字符，
+    这些值发到服务端会被判为非法参数（HTTP 400），应在本地就拦住。
+    """
+    if not isinstance(value, six.string_types):
+        return False
+    if not value:
+        return False
+    for char in value:
+        if char not in _DIGITS:
+            return False
+    return True
+
 
 class LogClient(object):
     """ Construct the LogClient with endpoint, accessKeyId, accessKey.
@@ -63,24 +91,96 @@ class LogClient(object):
     :param accessKeyId: tencent cloud accessKeyId
     :type accessKey: string
     :param accessKey: tencent cloud accessKey
+    :type uin: string
+    :param uin: 弱鉴权（免密）账号 uin，与 accessKeyId/accessKey 二选一填写。
+        两者同时填写时以 accessKeyId/accessKey 为准（走强鉴权），uin 被忽略。
+        弱鉴权仅支持日志上传，日志消费仍必须使用云 API 密钥。
     """
 
     __version__ = API_VERSION
     Version = __version__
 
-    def __init__(self, endpoint, accessKeyId, accessKey, securityToken=None, source=None, region='', is_https=False):
+    # 是否支持弱鉴权（免密）。服务端弱鉴权只覆盖日志写入链路，
+    # 云 API（管控）与日志消费接口没有对应分支，子类可置 False 关闭。
+    _support_weak_auth = True
+
+    # 旧 camelCase 关键字参数名 -> 新 snake_case 形参名，用于保持向后兼容
+    _LEGACY_KWARGS = (
+        ('accessKeyId', 'access_key_id'),
+        ('accessKey', 'access_key'),
+        ('securityToken', 'security_token'),
+    )
+
+    def __init__(self, endpoint, access_key_id=None, access_key=None, security_token=None, source=None, region='',
+                 is_https=False, uin=None, **kwargs):
+        # 兼容旧的 camelCase 关键字参数名（accessKeyId / accessKey / securityToken）
+        current = {
+            'access_key_id': access_key_id,
+            'access_key': access_key,
+            'security_token': security_token,
+        }
+        for legacy_name, new_name in self._LEGACY_KWARGS:
+            if legacy_name in kwargs:
+                legacy_value = kwargs.pop(legacy_name)
+                if current[new_name] is None:
+                    current[new_name] = legacy_value
+        if kwargs:
+            raise TypeError('unexpected keyword arguments: ' + ', '.join(sorted(kwargs)))
+        access_key_id = current['access_key_id']
+        access_key = current['access_key']
+        security_token = current['security_token']
+
         self._isRowIp = Util.is_row_ip(endpoint)
         self._setendpoint(endpoint, is_https)
-        self._accessKeyId = accessKeyId
-        self._accessKey = accessKey
+        self._accessKeyId = access_key_id
+        self._accessKey = access_key
+        self._uin = uin
+        self._validate_credentials()
         self._timeout = CONNECTION_TIME_OUT
         if source is None:
             self._source = Util.get_host_ip(self._logHost)
         else:
             self._source = source
-        self._securityToken = securityToken
+        self._securityToken = security_token
         self._user_agent = USER_AGENT
         self._region = region
+
+    def _is_weak_auth(self):
+        """ 判断当前是否走弱鉴权（免密）模式。
+
+        仅当 accessKeyId/accessKey 不齐全时才是弱鉴权，即 AK/SK 优先。
+        注意此处是 or 而非 and：半截密钥无法签名，只要不齐全就归为弱鉴权候选。
+
+        :return: bool
+        """
+        if not self._support_weak_auth:
+            return False
+        return not self._accessKeyId or not self._accessKey
+
+    def _validate_credentials(self):
+        """ 构造期校验凭证配置，配置错误尽早暴露。
+
+        AK/SK 齐全走强鉴权；否则要求填写合法的 uin 走弱鉴权（免密）。
+
+        :raise: LogException
+        """
+        # 不支持弱鉴权的客户端（云 API）保持既有行为，不新增校验
+        if not self._support_weak_auth:
+            return
+
+        if not self._is_weak_auth():
+            return
+
+        if not self._uin:
+            raise LogException(MISS_ACCESS_KEY_ID,
+                               'accessKeyId or accessKey cannot be empty, '
+                               'or set uin to use weak authorization')
+        if not _is_digits_only(self._uin):
+            raise LogException(INVALID_UIN, 'uin must be a digits-only string')
+
+        if self.http_type.lower() != 'https://':
+            logger.warning('weak authorization transmits uin in plaintext over HTTP, '
+                           'use an https endpoint or set is_https=True on untrusted networks')
 
     @property
     def timeout(self):
@@ -194,12 +294,18 @@ class LogClient(object):
                 headers2 = copy(headers)
                 params2 = copy(params)
                 headers2['X-Qcloud-User-Id'] = os.getenv("HEADER_USER_ID", "")
-                if self._securityToken:
-                    headers2["X-Cls-Token"] = self._securityToken
 
-                authorization = signature(self._accessKeyId, self._accessKey, method, resource, params2,
-                                          headers2, 300)
-                headers2["Authorization"] = authorization
+                if self._is_weak_auth():
+                    # 弱鉴权（免密）：只带明文身份头，不计算签名、不带 Authorization/X-Cls-Token
+                    headers2[HEADER_AUTH_MODE] = AUTH_MODE_WEAK
+                    headers2[HEADER_UIN] = self._uin
+                else:
+                    if self._securityToken:
+                        headers2["X-Cls-Token"] = self._securityToken
+                    authorization = signature(self._accessKeyId, self._accessKey, method, resource, params2,
+                                              headers2, 300)
+                    headers2["Authorization"] = authorization
+
                 return self._sendRequest(method, url, params2, body, headers2, response_body_type)
             except LogException as ex:
                 last_err = ex
@@ -268,6 +374,12 @@ class LogClient(object):
         :raise: LogException
         """
 
+        # 服务端弱鉴权只覆盖日志写入链路，消费接口没有对应分支，提前给出可读报错
+        if self._is_weak_auth():
+            raise LogException(UNSUPPORTED_OPERATION,
+                               'weak authorization does not support log consumption, '
+                               'use accessKeyId/accessKey instead')
+
         body_dict = {
             'StartOffset': offset,
             'StartTime': int(start_time),
@@ -297,6 +409,9 @@ class LogClient(object):
 
 
 class YunApiLogClient(LogClient):
+    # 云 API（管控接口）没有弱鉴权分支，必须使用云 API 密钥
+    _support_weak_auth = False
+
     def __init__(self, accessKeyId, accessKey, internal=False, securityToken=None, source=None, region='',
                  is_https=True):
         yunapi_endpoint = CLS_YUNAPI_ENDPOINT
