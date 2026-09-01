@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - v*.*.*  # 只有推送 v1.0.0 这种格式标签才会发布
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
