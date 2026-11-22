@@ -61,8 +61,10 @@ elif major == 3:
     else:
         requirements = requirements_py31
 
+# tencentcloud/__init__.py belongs to tencentcloud-sdk-python (it defines
+# __version__ there). Shipping our empty copy overwrites it on install and
+# deletes it on uninstall, so only the log packages are listed here.
 packages = [
-    'tencentcloud',
     'tencentcloud.log',
     'tencentcloud/log/consumer'
 ]
